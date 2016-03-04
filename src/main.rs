@@ -115,8 +115,11 @@ fn main() {
 									Ok(v) => v,
 									Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
 								};
-								let msg_string = format!("MESSAGE: {}: {}", username, payload_string);
-								dispatcher.send(msg_string).unwrap();
+								let payload_string = payload_string.trim();
+								if payload_string.len() > 0 {
+									let msg_string = format!("MESSAGE: {}: {}", username, payload_string);
+									dispatcher.send(msg_string).unwrap();
+								}
 							}
 						}
 					}
