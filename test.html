@@ -6,7 +6,7 @@
 	</head>
 	<body>
 		<script>
-			var socket = new WebSocket("ws://46.101.180.162:2794", "rust-websocket");
+			var socket = new WebSocket("ws://undeadleech.com:2794", "rust-websocket");
 			socket.onmessage = function (event) {
 				var received = document.getElementById("received");
 				var br = document.createElement("BR");
