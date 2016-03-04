@@ -1,0 +1,7 @@
+[package]
+name = "webchat"
+version = "0.1.0"
+authors = ["UndeadLeech <programming@undeadleech.de>"]
+
+[dependencies]
+websocket = "0.15.0"

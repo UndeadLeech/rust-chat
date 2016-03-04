@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>WebSocket Test</title>
+	</head>
+	<body>
+		<script>
+			var socket = new WebSocket("ws://127.0.0.1:2794", "rust-websocket");
+			socket.onmessage = function (event) {
+				var received = document.getElementById("received");
+				var br = document.createElement("BR");
+				var text = event.data;
+				if (text.startsWith("MESSAGE: ")) {
+					text = text.substring(8);
+					text = document.createTextNode(text);
+					received.appendChild(br);
+					received.appendChild(text);
+				}
+				else if (text.startsWith("SERVER: ")) {
+					text = text.substring(8);
+					if (text == "Connected.") {
+						document.getElementById("username_container").style.display = '';
+					}
+					else if (text.startsWith("Logged in as")) {
+						document.getElementById("chat_container").style.display = '';
+						document.getElementById("username_container").style.display = 'none';
+					}
+					
+					console.log(text);
+				}
+			};
+			
+			function send(element) {
+				var input = document.getElementById(element);
+				socket.send(input.value);
+				input.value = "";
+			}
+
+			function login(element) {
+				var username = document.getElementById(element).value;
+				var message = "/login " + username;
+				socket.send(message);
+			}
+		</script>
+
+		<div id="username_container" style="display: none;">
+			<p id="login">
+				<strong>Select Username:</strong>
+			</p>
+			<form onsubmit="login('username'); return false">
+				<input type="text" id="username" placeholder="username">
+				<input type="submit" value="Send">
+			</form>
+		</div>
+
+		<div id="chat_container" style="display: none;">
+			<p id="received">
+				<strong>Received Messages:</strong>
+			</p>
+			<form onsubmit="send('message'); return false">
+				<input type="text" id="message">
+				<input type="submit" value="Send">
+			</form>
+		</div>
+	</body>
+</html>
