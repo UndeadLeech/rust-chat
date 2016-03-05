@@ -21,12 +21,28 @@ fn main() {
 		let client_senders = client_senders.clone();
 		thread::spawn(move || {
 			while let Ok(msg) = dispatcher_rx.recv() {
-				for sender in client_senders.lock().unwrap().iter() {
-					sender.send(msg.clone()).unwrap();
+				let mut removed_clients = Vec::new();
+				for (i, sender) in client_senders.lock().unwrap().iter().enumerate() {
+					match sender.send(msg.clone()) {
+						Ok(_) => {},
+						Err(_) => {
+							// Could not send message because client thread closed
+							removed_clients.push(i);
+						}
+					}
+				}
+
+				// Remove all clients that don't exist anymore
+				for i in removed_clients {
+					client_senders.lock().unwrap().swap_remove(i);
 				}
 			}
 		});
 	}
+
+	// Options for removing element:
+	// swap_remove <- efficient
+	// remove <- ordering stays the same
 
 	// client threads
 	for connection in server {
@@ -69,7 +85,16 @@ fn main() {
 			let(tx, rx) = mpsc::channel::<Message>();
 			thread::spawn(move || {
 				for message in receiver.incoming_messages() {
-					tx.send(message.unwrap()).unwrap();
+					let message: Message = message.unwrap();
+					match message.opcode {
+						Type::Close => {
+							tx.send(message).unwrap();
+							break;
+						},
+						_ => {
+							tx.send(message).unwrap();
+						}
+					}
 				}
 			});
 
