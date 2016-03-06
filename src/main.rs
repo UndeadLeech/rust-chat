@@ -127,7 +127,7 @@ fn main() {
 									Ok(v) => v,
 									Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
 								};
-								if payload_string.len() > 8 {
+								if payload_string.len() > 7 {
 									match &payload_string[..7] {
 										"/login " => {
 											// Confirms login, if client dies the server doesnt give a fuck
