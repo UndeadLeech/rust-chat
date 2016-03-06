@@ -13,9 +13,19 @@
 				var text = event.data;
 				if (text.startsWith("MESSAGE: ")) {
 					text = text.substring(8);
+					var span = document.createElement("span");
 					text = document.createTextNode(text);
+					span.appendChild(text);
 					received.appendChild(br);
-					received.appendChild(text);
+					received.appendChild(span);
+
+					if (document.getElementById('received').getElementsByTagName('span').length > 1000) {
+						document.getElementById('received').getElementsByTagName('span')[0].remove();
+						document.getElementById('received').getElementsByTagName('br')[0].remove();
+					}
+
+					var rec = document.getElementById('received');
+					rec.scrollTop = rec.scrollHeight;
 				}
 				else if (text.startsWith("SERVER: ")) {
 					text = text.substring(8);
@@ -55,7 +65,7 @@
 		</div>
 
 		<div id="chat_container" style="display: none;">
-			<p id="received">
+			<p id="received" style="overflow-y: scroll; height: 90vh;">
 				<strong>Received Messages:</strong>
 			</p>
 			<form onsubmit="send('message'); return false">

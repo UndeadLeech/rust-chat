@@ -85,15 +85,22 @@ fn main() {
 			let(tx, rx) = mpsc::channel::<Message>();
 			thread::spawn(move || {
 				for message in receiver.incoming_messages() {
-					let message: Message = message.unwrap();
-					match message.opcode {
-						Type::Close => {
-							tx.send(message).unwrap();
-							break;
-						},
-						_ => {
-							tx.send(message).unwrap();
+					if let Ok(message) = message {
+						let message: Message = message;
+						match message.opcode {
+							Type::Close => {
+								tx.send(message).unwrap();
+								break;
+							},
+							_ => {
+								tx.send(message).unwrap();
+							}
 						}
+					}
+					else {
+						let message = Message::close();
+						tx.send(message).unwrap();
+						break;
 					}
 				}
 			});
@@ -102,12 +109,14 @@ fn main() {
 				if let Ok(message) = rx.try_recv() {
 					match message.opcode {
 						Type::Close => {
+							// Closes connection on both sides, doesn't check if client is still connected
 							let message = Message::close();
-							sender.send_message(&message).unwrap();
+							let _ = sender.send_message(&message);
 							println!("Client {} disconnected", ip);
 							return;
 						},
 						Type::Ping => {
+							// This could be an issue if ping is sent and client dies, the server will panic!
 							let message = Message::pong(message.payload);
 							sender.send_message(&message).unwrap();
 						},
@@ -121,13 +130,14 @@ fn main() {
 								if payload_string.len() > 8 {
 									match &payload_string[..7] {
 										"/login " => {
+											// Confirms login, if client dies the server doesnt give a fuck
 											payload_string = &payload_string[7..].trim();
 											username = String::from(payload_string);
 											if !username.is_empty() {
 												let msg_end = "'.".to_string();
 												let msg_string = "SERVER: Logged in as '".to_string() + &username + &msg_end;
 												let message: Message = Message::text(&msg_string[..	]);
-												sender.send_message(&message).unwrap();
+												let _ = sender.send_message(&message);
 											}
 										},
 										_ => { }
@@ -150,8 +160,9 @@ fn main() {
 					}
 				}
 				if let Ok(message) = client_rx.try_recv() {
+					// Send message from dispatcher to sender, the server doesnt give a fuck when client is dead
 					let message: Message = Message::text(message);
-					sender.send_message(&message).unwrap();
+					let _ = sender.send_message(&message);
 				}
 			}
 		});
