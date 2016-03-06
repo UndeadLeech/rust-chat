@@ -19,7 +19,7 @@ fn main() {
 	// dispatcher thread
 	{
 		let client_senders = client_senders.clone();
-		thread::spawn(move || {
+		let _ = thread::Builder::new().name("dispatcher".to_string()).spawn(move || {
 			while let Ok(msg) = dispatcher_rx.recv() {
 				let mut removed_clients = Vec::new();
 				for (i, sender) in client_senders.lock().unwrap().iter().enumerate() {
@@ -51,7 +51,7 @@ fn main() {
 		client_senders.lock().unwrap().push(client_tx);
 
 		// Spawn a new thread for each connection.
-		thread::spawn(move || {
+		let _ = thread::Builder::new().name("client".to_string()).spawn(move || {
 			let request = connection.unwrap().read_request().unwrap(); // Get the request
 			let headers = request.headers.clone(); // Keep the headers so we can check them
 
@@ -83,7 +83,7 @@ fn main() {
 			let mut username = String::new();
 
 			let(tx, rx) = mpsc::channel::<Message>();
-			thread::spawn(move || {
+			let _ = thread::Builder::new().name("receiver".to_string()).spawn(move || {
 				for message in receiver.incoming_messages() {
 					if let Ok(message) = message {
 						let message: Message = message;
