@@ -1,9 +1,9 @@
 extern crate websocket;
 
-use std::str;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
 use std::thread;
+use std::str;
 
 use websocket::{Server, Message, Sender, Receiver};
 use websocket::header::WebSocketProtocol;
@@ -16,7 +16,7 @@ fn main() {
 	let (dispatcher_tx, dispatcher_rx) = mpsc::channel::<String>();
 	let client_senders: Arc<Mutex<Vec<mpsc::Sender<String>>>> = Arc::new(Mutex::new(vec![]));
 
-	// dispatcher thread
+	// Dispatcher thread
 	{
 		let client_senders = client_senders.clone();
 		let _ = thread::Builder::new().name("dispatcher".to_string()).spawn(move || {
@@ -33,22 +33,21 @@ fn main() {
 				}
 
 				// Remove all clients that don't exist anymore
+				let mut removed_nbr = 0;
 				for i in removed_clients {
-					client_senders.lock().unwrap().swap_remove(i);
+					client_senders.lock().unwrap().swap_remove(i - removed_nbr);
+					removed_nbr += 1;
 				}
 			}
 		});
 	}
 
-	// Options for removing element:
-	// swap_remove <- efficient
-	// remove <- ordering stays the same
 
 	// client threads
 	for connection in server {
 		let dispatcher = dispatcher_tx.clone();
 		let (client_tx, client_rx) = mpsc::channel();
-		client_senders.lock().unwrap().push(client_tx);
+		client_senders.lock().unwrap().push(client_tx);   // THIS MIGHT CAUSE THE POISONERROR!!!
 
 		// Spawn a new thread for each connection.
 		let _ = thread::Builder::new().name("client".to_string()).spawn(move || {
