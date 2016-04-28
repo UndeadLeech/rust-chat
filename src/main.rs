@@ -26,7 +26,7 @@ fn main() {
 					match sender.send(msg.clone()) {
 						Ok(_) => {},
 						Err(_) => {
-							// Could not send message because client thread closed
+							// Couldn't send message because client thread closed
 							removed_clients.push(i);
 						}
 					}
